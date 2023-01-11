@@ -12,7 +12,7 @@ service Tracker{
     // rpc AllUser(Empty)returns(Record);
     rpc FindActivity(SearchActivity)returns(Record);
     rpc FindUserByActivity(SearchActivity)returns(stream Record);
-    rpc BoolDone()returns (bool);
+    // rpc BoolDone()returns (bool);
 }
 message Empty{}
 message SearchName{
