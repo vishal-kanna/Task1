@@ -1,0 +1,47 @@
+syntax="proto3";
+option go_package="Task/protos";
+
+import "google/protobuf/timestamp.proto";
+
+
+
+service Tracker{
+    rpc AddUser(Record)returns(Response);
+    rpc Update(RecordReq)returns(Response);
+    rpc Find(SearchName)returns(Record);
+    // rpc AllUser(Empty)returns(Record);
+    rpc FindActivity(SearchActivity)returns(Record);
+    rpc FindUserByActivity(SearchActivity)returns(stream Record);
+    rpc BoolDone()returns (bool);
+}
+message Empty{}
+message SearchName{
+    string Uname=1;
+}
+message User{
+    string name=1;
+    string email=2;
+    int64 phone=3;
+}
+enum Activity {
+    play=0;
+    eat=1;
+    sleep=2;
+    read=3;
+}
+message Record{
+    User user=1;
+    Activity activity=2;
+    // google.protobuf.Timestamp time_spent = 3;    
+}
+message RecordReq{
+    User user=1;
+    Activity activity=2;
+    // google.protobuf.Timestamp time_spent = 2;
+}
+message Response{
+    string response=1; 
+}
+message SearchActivity{
+    Activity activity=1;
+}
