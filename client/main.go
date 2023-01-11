@@ -18,7 +18,6 @@ var (
 	// name = flag.String("name", defaultName, "Name to greet")
 )
 
-// func pushRecordToDB(ctx context.Context,record)
 func main() {
 	flag.Parse()
 	// Set up a connection to the server.
@@ -64,25 +63,6 @@ func FindUser(c pb.TrackerClient, name string) {
 	log.Printf("The Queried user is  %v", res)
 }
 
-// func GetAllUsers(c pb.TrackerClient) {
-// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-// 	defer cancel()
-// 	req := &pb.Empty{}
-// 	stream, err := c.AllUser(ctx, req)
-// 	if err != nil {
-// 		log.Fatalf("%v.GetMovies(_)=_,%v", c, err)
-// 	}
-// 	for {
-// 		row, err := stream.Recv()
-// 		if err == io.EOF {
-// 			break
-// 		}
-// 		if err != nil {
-// 			log.Fatalf("%v.GetMovies(_)=_,%v", c, err)
-// 		}
-// 		log.Printf("Records %v", row)
-// 	}
-// }
 func Adduser(c pb.TrackerClient, name string, email string, phonenum int64, act pb.Activity) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -115,7 +95,6 @@ func GetActivityUser(c pb.TrackerClient, activity string) {
 	fmt.Println(res)
 }
 func GetAllUsersByActivity(c pb.TrackerClient, activity string) error {
-	// fmt.Println("hello")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	req := &pb.SearchActivity{Activity: pb.Activity(pb.Activity_value[activity])}
@@ -124,7 +103,7 @@ func GetAllUsersByActivity(c pb.TrackerClient, activity string) error {
 		log.Printf("error %v", err)
 	}
 	for {
-		// stream.Recv returns a pointer to a ListBlogRes at the current iteration
+		// stream.Recv returns a pointer to a Records at the current iteration
 		res, err := stream.Recv()
 		// If end of stream, break the loop
 		if err == io.EOF {
@@ -134,9 +113,8 @@ func GetAllUsersByActivity(c pb.TrackerClient, activity string) error {
 		if err != nil {
 			return err
 		}
-		// If everything went well use the generated getter to print the blog message
+		// If everything went well use the generated getter to print the Record message
 		fmt.Println(res)
 	}
-	// fmt.Println("hi")
 	return err
 }
