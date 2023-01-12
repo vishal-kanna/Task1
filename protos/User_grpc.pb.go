@@ -22,12 +22,11 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TrackerClient interface {
-	AddUser(ctx context.Context, in *Record, opts ...grpc.CallOption) (*Response, error)
-	Update(ctx context.Context, in *RecordReq, opts ...grpc.CallOption) (*Response, error)
-	Find(ctx context.Context, in *SearchName, opts ...grpc.CallOption) (*Record, error)
-	// rpc AllUser(Empty)returns(Record);
-	FindActivity(ctx context.Context, in *SearchActivity, opts ...grpc.CallOption) (*Record, error)
-	FindUserByActivity(ctx context.Context, in *SearchActivity, opts ...grpc.CallOption) (Tracker_FindUserByActivityClient, error)
+	AddUser(ctx context.Context, in *AddUserRequest, opts ...grpc.CallOption) (*AddUserResponse, error)
+	AddActivity(ctx context.Context, in *AddActivityReq, opts ...grpc.CallOption) (*AddActivityRes, error)
+	UpdateActivites(ctx context.Context, in *UpdateActivityReq, opts ...grpc.CallOption) (*UpdateActivityRes, error)
+	// rpc Update(RecordReq)returns(Response);
+	Find(ctx context.Context, in *FindUserReq, opts ...grpc.CallOption) (*FindUserRes, error)
 }
 
 type trackerClient struct {
@@ -38,8 +37,8 @@ func NewTrackerClient(cc grpc.ClientConnInterface) TrackerClient {
 	return &trackerClient{cc}
 }
 
-func (c *trackerClient) AddUser(ctx context.Context, in *Record, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
+func (c *trackerClient) AddUser(ctx context.Context, in *AddUserRequest, opts ...grpc.CallOption) (*AddUserResponse, error) {
+	out := new(AddUserResponse)
 	err := c.cc.Invoke(ctx, "/Tracker/AddUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -47,17 +46,26 @@ func (c *trackerClient) AddUser(ctx context.Context, in *Record, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *trackerClient) Update(ctx context.Context, in *RecordReq, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := c.cc.Invoke(ctx, "/Tracker/Update", in, out, opts...)
+func (c *trackerClient) AddActivity(ctx context.Context, in *AddActivityReq, opts ...grpc.CallOption) (*AddActivityRes, error) {
+	out := new(AddActivityRes)
+	err := c.cc.Invoke(ctx, "/Tracker/AddActivity", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *trackerClient) Find(ctx context.Context, in *SearchName, opts ...grpc.CallOption) (*Record, error) {
-	out := new(Record)
+func (c *trackerClient) UpdateActivites(ctx context.Context, in *UpdateActivityReq, opts ...grpc.CallOption) (*UpdateActivityRes, error) {
+	out := new(UpdateActivityRes)
+	err := c.cc.Invoke(ctx, "/Tracker/UpdateActivites", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *trackerClient) Find(ctx context.Context, in *FindUserReq, opts ...grpc.CallOption) (*FindUserRes, error) {
+	out := new(FindUserRes)
 	err := c.cc.Invoke(ctx, "/Tracker/Find", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -65,57 +73,15 @@ func (c *trackerClient) Find(ctx context.Context, in *SearchName, opts ...grpc.C
 	return out, nil
 }
 
-func (c *trackerClient) FindActivity(ctx context.Context, in *SearchActivity, opts ...grpc.CallOption) (*Record, error) {
-	out := new(Record)
-	err := c.cc.Invoke(ctx, "/Tracker/FindActivity", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *trackerClient) FindUserByActivity(ctx context.Context, in *SearchActivity, opts ...grpc.CallOption) (Tracker_FindUserByActivityClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Tracker_ServiceDesc.Streams[0], "/Tracker/FindUserByActivity", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &trackerFindUserByActivityClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Tracker_FindUserByActivityClient interface {
-	Recv() (*Record, error)
-	grpc.ClientStream
-}
-
-type trackerFindUserByActivityClient struct {
-	grpc.ClientStream
-}
-
-func (x *trackerFindUserByActivityClient) Recv() (*Record, error) {
-	m := new(Record)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // TrackerServer is the server API for Tracker service.
 // All implementations must embed UnimplementedTrackerServer
 // for forward compatibility
 type TrackerServer interface {
-	AddUser(context.Context, *Record) (*Response, error)
-	Update(context.Context, *RecordReq) (*Response, error)
-	Find(context.Context, *SearchName) (*Record, error)
-	// rpc AllUser(Empty)returns(Record);
-	FindActivity(context.Context, *SearchActivity) (*Record, error)
-	FindUserByActivity(*SearchActivity, Tracker_FindUserByActivityServer) error
+	AddUser(context.Context, *AddUserRequest) (*AddUserResponse, error)
+	AddActivity(context.Context, *AddActivityReq) (*AddActivityRes, error)
+	UpdateActivites(context.Context, *UpdateActivityReq) (*UpdateActivityRes, error)
+	// rpc Update(RecordReq)returns(Response);
+	Find(context.Context, *FindUserReq) (*FindUserRes, error)
 	mustEmbedUnimplementedTrackerServer()
 }
 
@@ -123,20 +89,17 @@ type TrackerServer interface {
 type UnimplementedTrackerServer struct {
 }
 
-func (UnimplementedTrackerServer) AddUser(context.Context, *Record) (*Response, error) {
+func (UnimplementedTrackerServer) AddUser(context.Context, *AddUserRequest) (*AddUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddUser not implemented")
 }
-func (UnimplementedTrackerServer) Update(context.Context, *RecordReq) (*Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
+func (UnimplementedTrackerServer) AddActivity(context.Context, *AddActivityReq) (*AddActivityRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddActivity not implemented")
 }
-func (UnimplementedTrackerServer) Find(context.Context, *SearchName) (*Record, error) {
+func (UnimplementedTrackerServer) UpdateActivites(context.Context, *UpdateActivityReq) (*UpdateActivityRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateActivites not implemented")
+}
+func (UnimplementedTrackerServer) Find(context.Context, *FindUserReq) (*FindUserRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Find not implemented")
-}
-func (UnimplementedTrackerServer) FindActivity(context.Context, *SearchActivity) (*Record, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FindActivity not implemented")
-}
-func (UnimplementedTrackerServer) FindUserByActivity(*SearchActivity, Tracker_FindUserByActivityServer) error {
-	return status.Errorf(codes.Unimplemented, "method FindUserByActivity not implemented")
 }
 func (UnimplementedTrackerServer) mustEmbedUnimplementedTrackerServer() {}
 
@@ -152,7 +115,7 @@ func RegisterTrackerServer(s grpc.ServiceRegistrar, srv TrackerServer) {
 }
 
 func _Tracker_AddUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Record)
+	in := new(AddUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -164,31 +127,49 @@ func _Tracker_AddUser_Handler(srv interface{}, ctx context.Context, dec func(int
 		FullMethod: "/Tracker/AddUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TrackerServer).AddUser(ctx, req.(*Record))
+		return srv.(TrackerServer).AddUser(ctx, req.(*AddUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Tracker_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RecordReq)
+func _Tracker_AddActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddActivityReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TrackerServer).Update(ctx, in)
+		return srv.(TrackerServer).AddActivity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Tracker/Update",
+		FullMethod: "/Tracker/AddActivity",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TrackerServer).Update(ctx, req.(*RecordReq))
+		return srv.(TrackerServer).AddActivity(ctx, req.(*AddActivityReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Tracker_UpdateActivites_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateActivityReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TrackerServer).UpdateActivites(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Tracker/UpdateActivites",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TrackerServer).UpdateActivites(ctx, req.(*UpdateActivityReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Tracker_Find_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SearchName)
+	in := new(FindUserReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -200,48 +181,9 @@ func _Tracker_Find_Handler(srv interface{}, ctx context.Context, dec func(interf
 		FullMethod: "/Tracker/Find",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TrackerServer).Find(ctx, req.(*SearchName))
+		return srv.(TrackerServer).Find(ctx, req.(*FindUserReq))
 	}
 	return interceptor(ctx, in, info, handler)
-}
-
-func _Tracker_FindActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SearchActivity)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TrackerServer).FindActivity(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/Tracker/FindActivity",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TrackerServer).FindActivity(ctx, req.(*SearchActivity))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Tracker_FindUserByActivity_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(SearchActivity)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(TrackerServer).FindUserByActivity(m, &trackerFindUserByActivityServer{stream})
-}
-
-type Tracker_FindUserByActivityServer interface {
-	Send(*Record) error
-	grpc.ServerStream
-}
-
-type trackerFindUserByActivityServer struct {
-	grpc.ServerStream
-}
-
-func (x *trackerFindUserByActivityServer) Send(m *Record) error {
-	return x.ServerStream.SendMsg(m)
 }
 
 // Tracker_ServiceDesc is the grpc.ServiceDesc for Tracker service.
@@ -256,24 +198,18 @@ var Tracker_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Tracker_AddUser_Handler,
 		},
 		{
-			MethodName: "Update",
-			Handler:    _Tracker_Update_Handler,
+			MethodName: "AddActivity",
+			Handler:    _Tracker_AddActivity_Handler,
+		},
+		{
+			MethodName: "UpdateActivites",
+			Handler:    _Tracker_UpdateActivites_Handler,
 		},
 		{
 			MethodName: "Find",
 			Handler:    _Tracker_Find_Handler,
 		},
-		{
-			MethodName: "FindActivity",
-			Handler:    _Tracker_FindActivity_Handler,
-		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "FindUserByActivity",
-			Handler:       _Tracker_FindUserByActivity_Handler,
-			ServerStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "protos/User.proto",
 }

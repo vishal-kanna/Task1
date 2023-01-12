@@ -6,18 +6,15 @@ import "google/protobuf/timestamp.proto";
 
 
 service Tracker{
-    rpc AddUser(Record)returns(Response);
-    rpc Update(RecordReq)returns(Response);
-    rpc Find(SearchName)returns(Record);
-    // rpc AllUser(Empty)returns(Record);
-    rpc FindActivity(SearchActivity)returns(Record);
-    rpc FindUserByActivity(SearchActivity)returns(stream Record);
-    // rpc BoolDone()returns (bool);
+    rpc AddUser(AddUserRequest)returns(AddUserResponse);
+    rpc AddActivity(AddActivityReq)returns(AddActivityRes);
+    rpc UpdateActivites(UpdateActivityReq)returns(UpdateActivityRes);
+    // rpc Update(RecordReq)returns(Response);
+    rpc Find(FindUserReq)returns(FindUserRes);
+    // rpc FindActivity(SearchActivity)returns(Record);
+    // rpc FindUserByActivity(SearchActivity)returns(stream Record);
 }
 message Empty{}
-message SearchName{
-    string Uname=1;
-}
 message User{
     string name=1;
     string email=2;
@@ -29,19 +26,31 @@ enum Activity {
     sleep=2;
     read=3;
 }
-message Record{
-    User user=1;
+message AddActivityReq{
+    string email=1;
     Activity activity=2;
-    // google.protobuf.Timestamp time_spent = 3;    
 }
-message RecordReq{
+message AddActivityRes{
+    string response=1;
+}
+message AddUserRequest{
+    User user=1;  
+}
+message AddUserResponse{
+    string response=1;
+}
+message UpdateActivityReq{
+    string email=1;
+    string Activity=2;
+}
+message UpdateActivityRes{
+    string Response=1;
+}
+message FindUserReq{
+    string email=1;  
+}
+message FindUserRes{
     User user=1;
-    Activity activity=2;
-    // google.protobuf.Timestamp time_spent = 2;
+    repeated Activity activities=2; 
 }
-message Response{
-    string response=1; 
-}
-message SearchActivity{
-    Activity activity=1;
-}
+
