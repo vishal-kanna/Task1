@@ -1,7 +1,7 @@
 syntax="proto3";
 option go_package="Task/protos";
 
-import "google/protobuf/timestamp.proto";
+import   "google/protobuf/timestamp.proto";
 
 
 
@@ -9,10 +9,7 @@ service Tracker{
     rpc AddUser(AddUserRequest)returns(AddUserResponse);
     rpc AddActivity(AddActivityReq)returns(AddActivityRes);
     rpc UpdateActivites(UpdateActivityReq)returns(UpdateActivityRes);
-    // rpc Update(RecordReq)returns(Response);
     rpc Find(FindUserReq)returns(FindUserRes);
-    // rpc FindActivity(SearchActivity)returns(Record);
-    // rpc FindUserByActivity(SearchActivity)returns(stream Record);
 }
 message Empty{}
 message User{
@@ -29,6 +26,8 @@ enum Activity {
 message AddActivityReq{
     string email=1;
     Activity activity=2;
+    google.protobuf.Timestamp added_time=3;
+    int64  duration=4;
 }
 message AddActivityRes{
     string response=1;
@@ -42,6 +41,8 @@ message AddUserResponse{
 message UpdateActivityReq{
     string email=1;
     string Activity=2;
+    int64 duration=3;
+    google.protobuf.Timestamp added_time=4;
 }
 message UpdateActivityRes{
     string Response=1;
@@ -53,4 +54,8 @@ message FindUserRes{
     User user=1;
     repeated Activity activities=2; 
 }
-
+message Adding{
+    Activity activity=1;
+    google.protobuf.Timestamp added_time=2;
+    int64  duration=3;
+}

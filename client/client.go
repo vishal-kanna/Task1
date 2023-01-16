@@ -10,6 +10,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var (
@@ -48,14 +49,16 @@ func main() {
 	// GetAllUsersByActivity(c, "read")
 	//Adduser(c, "Vishal", "Vishal123@gmail.com", 123456789)
 	//AddActivity(c, "Vishal123@gmail.com", "eat")
-	//Adduser(c, "Kanna", "kannavish123@gmail.com", 123456678)
-	//AddActivity(c, "kannavish123@gmail.com", "read")
+	// Adduser(c, "Kanna", "kannavish123@gmail.com", 123456678)
+	// AddActivity(c, "kannavish123@gmail.com", "read", 902570235)
 	//Adduser(c, "sai", "sai123@gmail.com", 9876543211)
-	AddActivity(c, "kannavish123@gmail.com", "eat")
-	//UpdateActivites(c, "sai123@gmail.com", "sleep")
+	// AddActivity(c, "kannavish123@gmail.com", "eat",)
+	//UpdateActivites(c, "sai123@gmail.com", 5, "sleep")
 	//Adduser(c, "hlo", "hlo@gmail.com", 788998668)
 	//UpdateActivites(c, "hlo@gmail.com", "sleep")
-	// Find(c, "hlo@gmail.com")
+	//Find(c, "hanshu@gmail.com")
+	//Adduser(c, "Hanshu", "hanshu@gmail.com", 123456789)
+	//AddActivity(c, "hanshu@gmail.com", "sleep", 9)
 }
 
 // func (s* server)
@@ -72,34 +75,35 @@ func main() {
 // 	log.Printf("The Queried user is  %v", res)
 // }
 
-func Adduser(c pb.TrackerClient, name string, email string, phonenum int64) {
+func Adduser(c pb.TrackerClient, req pb.AddUserRequest) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	req := &pb.AddUserRequest{User: &pb.User{Name: name, Email: email, Phone: phonenum}} //Activity: pb.Activity(pb.Activity_value[act.String()])}
-	res, err := c.AddUser(ctx, req)
+	req1 := &pb.AddUserRequest{User: &pb.User{Name: req.User.Name, Email: req.User.Email, Phone: req.User.Phone}} //Activity: pb.Activity(pb.Activity_value[act.String()])}
+	res, err := c.AddUser(ctx, req1)
 	if err != nil {
 		log.Fatalf("%v errr %v", c, err)
 	}
 	log.Println(res)
 }
-func AddActivity(c pb.TrackerClient, email string, activity string) {
+func AddActivity(c pb.TrackerClient, email string, activity string, duration int64) {
 	reqEmail := email
 	reqActivity := activity
+	reqduration := duration
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	req := &pb.AddActivityReq{Email: reqEmail, Activity: pb.Activity(pb.Activity_value[reqActivity])}
-	_, err := c.AddActivity(ctx, req)
+	req := &pb.AddActivityReq{Email: reqEmail, Activity: pb.Activity(pb.Activity_value[reqActivity]), AddedTime: timestamppb.Now(), Duration: reqduration}
+	ress, err := c.AddActivity(ctx, req)
 	if err != nil {
 		log.Fatalf("Err %v", err)
 	}
-	// fmt.Printf("res: %v\n", res.Response)
+	fmt.Printf("res: %v\n", ress.Response)
 }
-func UpdateActivites(c pb.TrackerClient, email string, activity string) {
+func UpdateActivites(c pb.TrackerClient, email string, duration int64, activity string) {
 	reqEmail := email
 	reqActivity := activity
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	req := &pb.UpdateActivityReq{Email: reqEmail, Activity: reqActivity}
+	req := &pb.UpdateActivityReq{Email: reqEmail, Duration: duration, AddedTime: timestamppb.Now(), Activity: reqActivity}
 	res, err := c.UpdateActivites(ctx, req)
 	if err != nil {
 		log.Fatalf("Err %v", err)
@@ -117,48 +121,3 @@ func Find(c pb.TrackerClient, email string) {
 	}
 	fmt.Println("result is ", res)
 }
-
-// // func Update(c pb.TrackerClient, email string, act pb.Activity) {
-// // 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-// // 	defer cancel()
-// // 	req := &pb.RecordReq{User: &pb.User{Email: email}, Activity: pb.Activity(pb.Activity_value[act.String()])}
-// // 	_, err := c.Update(ctx, req)
-// // 	if err != nil {
-// // 		log.Fatalf("Error in Updatin the user %v", err)
-// // 	}
-// // }
-
-// func GetActivityUser(c pb.TrackerClient, activity string) {
-// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-// 	defer cancel()
-// 	act := &pb.SearchActivity{Activity: pb.Activity(pb.Activity_value[activity])}
-// 	res, err := c.FindActivity(ctx, act)
-// 	if err != nil {
-// 		log.Fatal("Error occured", err)
-// 	}
-// 	fmt.Println(res)
-// }
-// func GetAllUsersByActivity(c pb.TrackerClient, activity string) error {
-// 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-// 	defer cancel()
-// 	req := &pb.SearchActivity{Activity: pb.Activity(pb.Activity_value[activity])}
-// 	stream, err := c.FindUserByActivity(ctx, req)
-// 	if err != nil {
-// 		log.Printf("error %v", err)
-// 	}
-// 	for {
-// 		// stream.Recv returns a pointer to a Records at the current iteration
-// 		res, err := stream.Recv()
-// 		// If end of stream, break the loop
-// 		if err == io.EOF {
-// 			break
-// 		}
-// 		// if err, return an error
-// 		if err != nil {
-// 			return err
-// 		}
-// 		// If everything went well use the generated getter to print the Record message
-// 		fmt.Println(res)
-// 	}
-// 	return err
-// }

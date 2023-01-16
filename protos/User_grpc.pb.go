@@ -25,7 +25,6 @@ type TrackerClient interface {
 	AddUser(ctx context.Context, in *AddUserRequest, opts ...grpc.CallOption) (*AddUserResponse, error)
 	AddActivity(ctx context.Context, in *AddActivityReq, opts ...grpc.CallOption) (*AddActivityRes, error)
 	UpdateActivites(ctx context.Context, in *UpdateActivityReq, opts ...grpc.CallOption) (*UpdateActivityRes, error)
-	// rpc Update(RecordReq)returns(Response);
 	Find(ctx context.Context, in *FindUserReq, opts ...grpc.CallOption) (*FindUserRes, error)
 }
 
@@ -80,7 +79,6 @@ type TrackerServer interface {
 	AddUser(context.Context, *AddUserRequest) (*AddUserResponse, error)
 	AddActivity(context.Context, *AddActivityReq) (*AddActivityRes, error)
 	UpdateActivites(context.Context, *UpdateActivityReq) (*UpdateActivityRes, error)
-	// rpc Update(RecordReq)returns(Response);
 	Find(context.Context, *FindUserReq) (*FindUserRes, error)
 	mustEmbedUnimplementedTrackerServer()
 }

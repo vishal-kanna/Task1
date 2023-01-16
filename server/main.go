@@ -27,91 +27,18 @@ type server struct {
 	pb.UnimplementedTrackerServer
 }
 
-// func (s *server) FindActivity(ctx context.Context, req *pb.SearchActivity) (*pb.Record, error) {
-// 	query := bson.M{
-// 		"activity_type": req.GetActivity().String(),
-// 	}
-// 	fmt.Println("the query is ", query)
-// 	res := collection.FindOne(ctx, query)
-// 	fmt.Println("result of findOne", res)
-// 	user := &User_record{}
-// 	err := res.Decode(user)
-// 	fmt.Println("user_record is ", user)
-// 	handleError(err)
-// 	result := &pb.Record{
-// 		User: &pb.User{
-// 			Name:  user.Name,
-// 			Email: user.Email,
-// 			Phone: user.Phone,
-// 		},
-// 		Activity: pb.Activity(pb.Activity_value[user.Activity_type]),
-// 	}
-// 	// fmt.Println(res1)
-// 	// fmt.Println(reflect.TypeOf(res1))
-// 	return result, nil
-// }
-// func (s *server) FindUserByActivity(req *pb.SearchActivity, stream pb.Tracker_FindUserByActivityServer) error {
-// 	fmt.Println("Entered into function")
-// 	query := bson.M{
-// 		"activity_type": req.GetActivity().String(),
-// 	}
-// 	fmt.Printf("query: %v\n", query)
-// 	user := &User_record{}
-// 	users := &pb.Record{}
-// 	cursor, err := collection.Find(context.Background(), query)
-// 	handleError(err)
-// 	defer cursor.Close(context.Background())
-// 	for cursor.Next(context.Background()) {
-// 		err := cursor.Decode(user)
-// 		handleError(err)
-// 		users = &pb.Record{
-// 			User: &pb.User{
-// 				Name:  user.Name,
-// 				Email: user.Email,
-// 				Phone: user.Phone,
-// 			},
-// 			Activity: pb.Activity(pb.Activity_value[user.Activity_type]),
-// 		}
-// 		stream.Send(users)
-// 	}
-// 	if err := cursor.Err(); err != nil {
-// 		log.Fatalf("Error %v", err)
-// 	}
-// 	return nil
-// }
-// func (s *server) Find(ctx context.Context, in *pb.SearchName) (*pb.Record, error) {
-
-// 	query := bson.M{
-// 		"name": in.Uname,
-// 	}
-
-// 	user := &User_record{}
-// 	res := collection.FindOne(ctx, query)
-// 	err := res.Decode(user)
-// 	handleError(err)
-// 	result := &pb.Record{
-// 		User: &pb.User{
-// 			Name:  user.Name,
-// 			Email: user.Email,
-// 			Phone: user.Phone,
-// 		},
-// 		Activity: pb.Activity(pb.Activity_value[user.Activity_type]),
-// 	}
-// 	return result, nil
-// }
-
 //db model
 type User_record struct {
 	Id            primitive.ObjectID `bson:"_id,omitempty"`
 	Name          string             `bson:"name"`
 	Email         string             `bson:"email"`
 	Phone         int64              `bson:"phone"`
-	Activity_type []string           `bson:"activity_type"`
+	Activity_type []pb.Adding        `bson:"activity_type"`
 }
 
 type user_details struct {
 	name          string `bson:"name"`
-	email         string `bson :"Email"`
+	email         string `bson :"email"`
 	phone         int64  `bson:"phone"`
 	activity_type string `bson:"activity_type"`
 }
@@ -137,13 +64,14 @@ func pushRecordToDB(ctx context.Context, user User_record) string {
 	result := "new user added"
 	return result
 }
+
+//Adding the User
 func (s *server) AddUser(ctx context.Context, in *pb.AddUserRequest) (*pb.AddUserResponse, error) {
 	newUser := User_record{
 		Name:          in.User.Name,
 		Email:         in.User.Email,
 		Phone:         in.User.Phone,
-		Activity_type: []string{},
-		// Activity_type: in.Activity.String(),
+		Activity_type: []pb.Adding{},
 	}
 	result := pushRecordToDB(ctx, newUser)
 	res := &pb.AddUserResponse{
@@ -157,17 +85,29 @@ func (s *server) AddActivity(ctx context.Context, req *pb.AddActivityReq) (*pb.A
 	query := bson.M{
 		"email": req.Email,
 	}
-	activity := req.GetActivity().String()
+	activity := req.Activity
+	dura := req.Duration
+	activitytime := req.AddedTime
+	result1 := pb.Adding{
+		Activity:  pb.Activity(pb.Activity_value[activity.String()]),
+		AddedTime: activitytime,
+		Duration:  dura,
+	}
+	fmt.Printf("result1: %v\n", result1.Activity)
 	res1 := collection.FindOne(ctx, query)
 	user := &User_record{}
-	res1.Decode(user)
-	user.Activity_type = append(user.Activity_type, activity)
+	err := res1.Decode(user)
+	result := &pb.AddActivityRes{}
+	if err != nil {
+		return result, err
+	}
+	user.Activity_type = append(user.Activity_type, result1)
 	data := bson.M{
 		"$set": bson.M{
 			"activity_type": user.Activity_type,
 		},
 	}
-	result := &pb.AddActivityRes{}
+
 	res := collection.FindOneAndUpdate(ctx, query, data)
 	if res != nil {
 		log.Fatalf("err is %v", res)
@@ -193,7 +133,12 @@ func (s *server) UpdateActivites(ctx context.Context, req *pb.UpdateActivityReq)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
-	user.Activity_type = append(user.Activity_type, reqActivity)
+	act := &pb.Adding{
+		Activity:  pb.Activity(pb.Activity_value[reqActivity]),
+		AddedTime: req.AddedTime,
+		Duration:  req.Duration,
+	}
+	user.Activity_type = append(user.Activity_type, *act)
 	data := bson.M{
 		"$set": bson.M{
 			"activity_type": user.Activity_type,
@@ -223,47 +168,9 @@ func (s *server) Find(ctx context.Context, req *pb.FindUserReq) (*pb.FindUserRes
 		Email: user.Email,
 		Phone: user.Phone,
 	},
-
-	// Activities: []pb.Activity(user.Activity_type[]),
 	}
 	return result, nil
-	//	query := bson.M{
-	// 		"name": in.Uname,
-	// 	}
-
-	// 	user := &User_record{}
-	// 	res := collection.FindOne(ctx, query)
-	// 	err := res.Decode(user)
-	// 	handleError(err)
-	// 	result := &pb.Record{
-	// 		User: &pb.User{
-	// 			Name:  user.Name,
-	// 			Email: user.Email,
-	// 			Phone: user.Phone,
-	// 		},
-	// 		Activity: pb.Activity(pb.Activity_value[user.Activity_type]),
-	// 	}
-	// 	return result, nil
-
 }
-
-// func (s *server) Update(ctx context.Context, in *pb.RecordReq) (*pb.Response, error) {
-// 	res := pb.Response{}
-
-// 	user_email := in.User.Email
-// 	user_Activity_type := in.GetActivity()
-// 	data := bson.M{
-// 		"$set": bson.M{
-// 			"activity_type": user_Activity_type.String(),
-// 		},
-// 	}
-// 	query := bson.M{
-// 		"email": user_email,
-// 	}
-// 	_, err := collection.UpdateOne(ctx, query, data)
-// 	handleError(err)
-// 	return &res, nil
-// }
 func handleError(err error) {
 	if err != nil {
 		log.Fatal(err)
