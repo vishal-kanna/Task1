@@ -107,14 +107,19 @@ func (s *server) AddActivity(ctx context.Context, req *pb.AddActivityReq) (*pb.A
 			"activity_type": user.Activity_type,
 		},
 	}
-
-	res := collection.FindOneAndUpdate(ctx, query, data)
-	if res != nil {
-		log.Fatalf("err is %v", res)
-	} else {
-		result = &pb.AddActivityRes{
-			Response: "Updated",
-		}
+	user1 := &User_record{}
+	err = collection.FindOneAndUpdate(ctx, query, data).Decode(user1)
+	if err != nil {
+		log.Fatalf("err is %v", err)
+	}
+	if err == mongo.ErrNoDocuments {
+		return result, err
+	}
+	log.Fatal(err)
+	// else {
+	result = &pb.AddActivityRes{
+		Response: "Updated",
+		// }
 	}
 	return result, nil
 }

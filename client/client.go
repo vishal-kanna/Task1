@@ -10,7 +10,6 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var (
@@ -18,7 +17,7 @@ var (
 	// name = flag.String("name", defaultName, "Name to greet")
 )
 
-func main() {
+func Main() {
 	flag.Parse()
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -27,6 +26,7 @@ func main() {
 	}
 	defer conn.Close()
 	c := pb.NewTrackerClient(conn)
+	fmt.Println(c)
 	// runFindUser(c, "Kanna")
 	// runGetAllUsers(c)
 	//Adduser(c, "Kanna", "kanna123@gmail.com", 123456789, pb.Activity_sleep)
@@ -75,9 +75,16 @@ func main() {
 // 	log.Printf("The Queried user is  %v", res)
 // }
 
-func Adduser(c pb.TrackerClient, req pb.AddUserRequest) {
+func Adduser(c pb.TrackerClient, username string, email string, phone int64) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
+	req := &pb.AddUserRequest{
+		User: &pb.User{
+			Name:  username,
+			Email: email,
+			Phone: phone,
+		},
+	}
 	req1 := &pb.AddUserRequest{User: &pb.User{Name: req.User.Name, Email: req.User.Email, Phone: req.User.Phone}} //Activity: pb.Activity(pb.Activity_value[act.String()])}
 	res, err := c.AddUser(ctx, req1)
 	if err != nil {
@@ -91,7 +98,7 @@ func AddActivity(c pb.TrackerClient, email string, activity string, duration int
 	reqduration := duration
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	req := &pb.AddActivityReq{Email: reqEmail, Activity: pb.Activity(pb.Activity_value[reqActivity]), AddedTime: timestamppb.Now(), Duration: reqduration}
+	req := &pb.AddActivityReq{Email: reqEmail, Activity: pb.Activity(pb.Activity_value[reqActivity]), AddedTime: time.Now().Format("01-02-2006"), Duration: reqduration}
 	ress, err := c.AddActivity(ctx, req)
 	if err != nil {
 		log.Fatalf("Err %v", err)
@@ -103,7 +110,7 @@ func UpdateActivites(c pb.TrackerClient, email string, duration int64, activity 
 	reqActivity := activity
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	req := &pb.UpdateActivityReq{Email: reqEmail, Duration: duration, AddedTime: timestamppb.Now(), Activity: reqActivity}
+	req := &pb.UpdateActivityReq{Email: reqEmail, Duration: duration, AddedTime: time.Now().Format("01-02-2006 15:04:05 Monday"), Activity: reqActivity}
 	res, err := c.UpdateActivites(ctx, req)
 	if err != nil {
 		log.Fatalf("Err %v", err)

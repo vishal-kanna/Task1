@@ -26,7 +26,7 @@ enum Activity {
 message AddActivityReq{
     string email=1;
     Activity activity=2;
-    google.protobuf.Timestamp added_time=3;
+    string added_time=3;
     int64  duration=4;
 }
 message AddActivityRes{
@@ -42,7 +42,7 @@ message UpdateActivityReq{
     string email=1;
     string Activity=2;
     int64 duration=3;
-    google.protobuf.Timestamp added_time=4;
+    string added_time=4;
 }
 message UpdateActivityRes{
     string Response=1;
@@ -56,6 +56,6 @@ message FindUserRes{
 }
 message Adding{
     Activity activity=1;
-    google.protobuf.Timestamp added_time=2;
+    string added_time=2;
     int64  duration=3;
 }
