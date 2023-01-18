@@ -46,18 +46,20 @@ func handleError(err error) {
 }
 
 type User struct {
-	Name  string `bson:"name"`
-	Phone int64  `bson:"phone"`
-	Email string `bson:"email"`
+	Name    string     `json:"name" bson:"name"`
+	Phone   int64      `json:"phone" bson:"phone"`
+	Email   string     `json:"email" bson:"email"`
+	Act_rec []Activity `json :"act_rec" bson:"act_rec"`
 }
 type Activity struct {
-	Useractivity string `bson :"useractivity"`
-	Duration     string `bson :"duration"`
-	AddedTime    string `bson:"addedtime"`
-	Email        string `bson:email`
+	Useractivity string `json :"useractivity" bson:"useractivity"`
+	Duration     string `json :"duration" bson:"duration"`
+	AddedTime    string `json:"added_time" bson:"added_time"`
+	Email        string `json:"email" bson:"email"`
 }
 
 var collection *mongo.Collection
+
 var collection1 *mongo.Collection
 
 func homepage(w http.ResponseWriter, r *http.Request) {
@@ -68,25 +70,30 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var user = &User{}
 	json.NewDecoder(r.Body).Decode(user)
+	acts := []Activity{}
+	user.Act_rec = acts
+	// fmt.Println("user name is", user.Name)
 	query := bson.M{
 		"email": user.Email,
 	}
 	var data []User
 	respon, err := collection.Find(context.Background(), query)
 	handleError(err)
-	var result string
+	// var result string
 	respon.All(context.Background(), &data)
 	if len(data) != 0 {
-		result = "email already present"
+		// result = "email already present"
+		result := "email already present"
+		w.Write([]byte(result))
+
 	} else {
-		_, err = collection.InsertOne(context.Background(), user)
+		res, err := collection.InsertOne(context.Background(), user)
 		if err != nil {
 			fmt.Println("err", err)
-		} else {
-			result = "user added"
 		}
+		json.NewEncoder(w).Encode(res)
 	}
-	w.Write([]byte(result))
+	// w.Write([]byte(result))
 }
 func Finduser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -95,71 +102,54 @@ func Finduser(w http.ResponseWriter, r *http.Request) {
 	query := bson.M{
 		"email": user.Email,
 	}
-	// fmt.Println("the query is %v", query)
-	err := collection.FindOne(context.Background(), query)
-	var result string
+	err := collection.FindOne(context.Background(), query).Decode(user)
+	// fmt.Println("user foun", user)
 	if err != nil {
 		fmt.Println("err is ", err)
-		result = "couldnot find the user"
-	} else {
-		result = "user found"
 	}
-
-	w.Write([]byte(result))
+	json.NewEncoder(w).Encode(user)
 }
 func AddActivity(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var activityofuser = &Activity{}
 	json.NewDecoder(r.Body).Decode(activityofuser)
+	fmt.Println("activity", activityofuser)
 	email := activityofuser.Email
 	fmt.Println("email of the user is ", email)
 	query := bson.M{
 		"email": email,
 	}
-	cursor, err := collection.Find(context.Background(), query)
-	var result string
-	handleError(err)
-	var result_data []User
-	cursor.All(context.Background(), &result_data)
-	fmt.Println(result_data)
-	if len(result_data) == 0 {
-		// ErrNoDocuments means that the filter did not match any documents in
-		result = "email doesnt exist"
-	} else {
-		_, err := collection1.InsertOne(context.Background(), activityofuser)
-		if err != nil {
-			fmt.Println("error is ", err)
-		} else {
-			result = "activity added for the user"
-		}
+	user := &User{}
+	collection.FindOne(context.Background(), query).Decode(user)
+	fmt.Println("user is ..", user)
+	user.Act_rec = append(user.Act_rec, *activityofuser)
+	data := bson.M{
+		"$set": bson.M{
+			"act_rec": user.Act_rec,
+		},
 	}
-	w.Write([]byte(result))
-}
-func UpdateActivity(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var act Activity
-	err := json.NewDecoder(r.Body).Decode(&act)
-	var result string
+
+	// user1 := User{}
+	err := collection.FindOneAndUpdate(context.Background(), query, data).Decode(user)
 	if err != nil {
-		fmt.Println("err is %v", err)
-		result = "couldnot update the activity"
-	} else {
-		email := act.Email
-		query := bson.M{
-			email: email,
-		}
-		data := bson.M{
-			"$set": bson.M{
-				"useractivity": act.Useractivity,
-				"duration":     act.Duration,
-				"addedtime":    act.AddedTime,
-			},
-		}
-		collection1.FindOneAndReplace(context.Background(), query, data)
-		result = "activity of the user updated"
+		log.Fatalf("err is %v", err)
 	}
-	w.Write([]byte(result))
+	if err == mongo.ErrNoDocuments {
+		fmt.Println("err is", err)
+	}
+	json.NewEncoder(w).Encode(user)
 }
+
+// func UpdateActivity(w http.ResponseWriter, r *http.Request) {
+// 	w.Header().Set("Content-Type", "application/json")
+// 	// var act Activity
+// 	// err := json.NewDecoder(r.Body).Decode(&act)
+// 	// var result string
+// 	// if err != nil {
+// 	// 	fmt.Println("err is %v", err)
+// 	// 	result = "couldnot update the activity"
+// 	// }
+// }
 func main() {
 	flag.Parse()
 	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
@@ -182,7 +172,7 @@ func main() {
 	myRouter.HandleFunc("/", homePage)
 	myRouter.HandleFunc("/createuser", CreateUser).Methods("POST")
 	myRouter.HandleFunc("/addactivity", AddActivity).Methods("POST")
-	myRouter.HandleFunc("/updateactivity", UpdateActivity).Methods("POST")
+	// myRouter.HandleFunc("/updateactivity", UpdateActivity).Methods("POST")
 	myRouter.HandleFunc("/find", Finduser).Methods("GET")
 	log.Fatal(http.ListenAndServe("0.0.0.0:10000", myRouter))
 }
