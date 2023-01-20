@@ -73,6 +73,7 @@ func (s *server) AddUser(ctx context.Context, in *pb.AddUserRequest) (*pb.AddUse
 		Phone:         in.User.Phone,
 		Activity_type: []pb.Adding{},
 	}
+	// fmt.Println("passed request is ", in)
 	result := pushRecordToDB(ctx, newUser)
 	res := &pb.AddUserResponse{
 		Response: result,
@@ -116,10 +117,8 @@ func (s *server) AddActivity(ctx context.Context, req *pb.AddActivityReq) (*pb.A
 		return result, err
 	}
 	log.Fatal(err)
-	// else {
 	result = &pb.AddActivityRes{
 		Response: "Updated",
-		// }
 	}
 	return result, nil
 }
@@ -166,7 +165,7 @@ func (s *server) Find(ctx context.Context, req *pb.FindUserReq) (*pb.FindUserRes
 	res := collection.FindOne(ctx, query)
 	err := res.Decode(user)
 	if err != nil {
-		fmt.Println("error is ", err)
+		return result, err
 	}
 	result = &pb.FindUserRes{User: &pb.User{
 		Name:  user.Name,

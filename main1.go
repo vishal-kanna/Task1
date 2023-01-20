@@ -19,26 +19,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: homePage")
 }
 
-// func CreateUser(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-
-// 	user := pb.User{}
-
-// 	// we decode our body request params
-// 	_ = json.NewDecoder(r.Body).Decode(&user)
-// 	// insert our book model.
-// 	result, err := collection.InsertOne(context.TODO(), book)
-
-// 	if err != nil {
-// 		helper.GetError(err, w)
-// 		return
-// 	}
-
-// 	json.NewEncoder(w).Encode(result)
-// }
-// func handleRequests() {
-
-// }
 func handleError(err error) {
 	if err != nil {
 		log.Fatalf("error is %v", err)
@@ -60,7 +40,7 @@ type Activity struct {
 
 var collection *mongo.Collection
 
-var collection1 *mongo.Collection
+// var collection1 *mongo.Collection
 
 func homepage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the HomePage!")
@@ -139,17 +119,6 @@ func AddActivity(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(user)
 }
-
-// func UpdateActivity(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	// var act Activity
-// 	// err := json.NewDecoder(r.Body).Decode(&act)
-// 	// var result string
-// 	// if err != nil {
-// 	// 	fmt.Println("err is %v", err)
-// 	// 	result = "couldnot update the activity"
-// 	// }
-// }
 func main() {
 	flag.Parse()
 	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
@@ -158,15 +127,7 @@ func main() {
 	err = client.Connect(context.TODO())
 	handleError(err)
 	collection = (*mongo.Collection)(client.Database("restapi").Collection("Tracker"))
-	collection1 = (*mongo.Collection)(client.Database("restapi").Collection("Activity"))
-	// ch := make(chan os.Signal, 1)
-	// signal.Notify(ch, os.Interrupt)
-	// <-ch
-	// fmt.Println("Closing Mongo Connection")
-	// if err := client.Disconnect(context.TODO()); err != nil {
-	// 	handleError(err)
-	// }
-
+	// collection1 = (*mongo.Collection)(client.Database("restapi").Collection("Activity"))
 	fmt.Println("collection", collection.Name())
 	myRouter := mux.NewRouter()
 	myRouter.HandleFunc("/", homePage)
