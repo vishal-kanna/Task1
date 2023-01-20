@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	pb "task/protos"
 	"testing"
 
@@ -103,5 +104,33 @@ func TestAddactivity(t *testing.T) {
 		fmt.Println("the error is ", err)
 	}
 	c := pb.NewTrackerClient(connection)
-	AddActivity(c, "kannavitwit@gmail.com", "eat", 40)
+	res, err := AddActivity(c, "kannavitwit@gmail.com", "read", 40)
+	if err != nil {
+		log.Fatalf("err is %v", err)
+	}
+	fmt.Println("response is ", res)
+	want := &pb.AddActivityRes{
+		Response: "Updated",
+	}
+	if want.Response == res {
+		fmt.Printf("want is %v and got is %v", res, want.Response)
+	} else {
+		t.Errorf("Err %q", err)
+	}
+}
+func TestUpdateActivity(t *testing.T) {
+	connection, err := grpc.Dial(":50051", grpc.WithInsecure())
+	if err != nil {
+		fmt.Println("the error is ", err)
+	}
+	c := pb.NewTrackerClient(connection)
+	res, err := UpdateActivites(c, "kannavitwit@gmail.com", 34, "sleep")
+	want := pb.UpdateActivityRes{
+		Response: "Updated",
+	}
+	if res == want.Response {
+		fmt.Printf("want is %v and got is %v", res, want.Response)
+	} else {
+		t.Errorf("Err %q", err)
+	}
 }

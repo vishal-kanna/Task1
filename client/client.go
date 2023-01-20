@@ -47,7 +47,7 @@ func Adduser(c pb.TrackerClient, username string, email string, phone int64) str
 	log.Println(res)
 	return res.Response
 }
-func AddActivity(c pb.TrackerClient, email string, activity string, duration int64) {
+func AddActivity(c pb.TrackerClient, email string, activity string, duration int64) (string, error) {
 	reqEmail := email
 	reqActivity := activity
 	reqduration := duration
@@ -57,11 +57,11 @@ func AddActivity(c pb.TrackerClient, email string, activity string, duration int
 	req := &pb.AddActivityReq{Email: reqEmail, Activity: pb.Activity(pb.Activity_value[reqActivity]), AddedTime: time.Now().Format("01-02-2006"), Duration: reqduration}
 	ress, err := c.AddActivity(ctx, req)
 	if err != nil {
-		log.Fatalf("Err %v", err)
+		return ress.Response, err
 	}
-	fmt.Printf("res: %v\n", ress.Response)
+	return ress.Response, nil
 }
-func UpdateActivites(c pb.TrackerClient, email string, duration int64, activity string) {
+func UpdateActivites(c pb.TrackerClient, email string, duration int64, activity string) (string, error) {
 	reqEmail := email
 	reqActivity := activity
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -69,9 +69,9 @@ func UpdateActivites(c pb.TrackerClient, email string, duration int64, activity 
 	req := &pb.UpdateActivityReq{Email: reqEmail, Duration: duration, AddedTime: time.Now().Format("01-02-2006 15:04:05 Monday"), Activity: reqActivity}
 	res, err := c.UpdateActivites(ctx, req)
 	if err != nil {
-		log.Fatalf("Err %v", err)
+		return "Didn't Update", err
 	}
-	fmt.Println("Result is ", res)
+	return res.Response, err
 }
 func Find(c pb.TrackerClient, email string) (*pb.FindUserRes, error) {
 	reqEmail := email

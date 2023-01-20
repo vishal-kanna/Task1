@@ -94,12 +94,15 @@ func (s *server) AddActivity(ctx context.Context, req *pb.AddActivityReq) (*pb.A
 		AddedTime: activitytime,
 		Duration:  dura,
 	}
-	fmt.Printf("result1: %v\n", result1.Activity)
+	// fmt.Printf("result1: %v\n", result1.Activity)
 	res1 := collection.FindOne(ctx, query)
 	user := &User_record{}
 	err := res1.Decode(user)
 	result := &pb.AddActivityRes{}
 	if err != nil {
+		result = &pb.AddActivityRes{
+			Response: "Activity didnt updated",
+		}
 		return result, err
 	}
 	user.Activity_type = append(user.Activity_type, result1)
@@ -111,16 +114,16 @@ func (s *server) AddActivity(ctx context.Context, req *pb.AddActivityReq) (*pb.A
 	user1 := &User_record{}
 	err = collection.FindOneAndUpdate(ctx, query, data).Decode(user1)
 	if err != nil {
-		log.Fatalf("err is %v", err)
+		return result, err
 	}
 	if err == mongo.ErrNoDocuments {
 		return result, err
 	}
-	log.Fatal(err)
+	// log.Fatal(err)
 	result = &pb.AddActivityRes{
 		Response: "Updated",
 	}
-	return result, nil
+	return result, err
 }
 
 //Updating the activites of the user
@@ -134,8 +137,9 @@ func (s *server) UpdateActivites(ctx context.Context, req *pb.UpdateActivityReq)
 	res := collection.FindOne(ctx, query)
 	// fmt.Println("res..", res)
 	err := res.Decode(user)
+	result := &pb.UpdateActivityRes{}
 	if err != nil {
-		fmt.Printf("err: %v\n", err)
+		return result, err
 	}
 	act := &pb.Adding{
 		Activity:  pb.Activity(pb.Activity_value[reqActivity]),
@@ -149,11 +153,11 @@ func (s *server) UpdateActivites(ctx context.Context, req *pb.UpdateActivityReq)
 		},
 	}
 	collection.FindOneAndUpdate(ctx, query, data)
-	result := &pb.UpdateActivityRes{}
+	result = &pb.UpdateActivityRes{}
 	result = &pb.UpdateActivityRes{
 		Response: "Updated",
 	}
-	return result, nil
+	return result, err
 }
 func (s *server) Find(ctx context.Context, req *pb.FindUserReq) (*pb.FindUserRes, error) {
 	reqemail := req.Email
