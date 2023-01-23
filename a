@@ -1,0 +1,52 @@
+[1mdiff --git a/client/client_test.go b/client/client_test.go[m
+[1mindex 2785f20..ea9738c 100644[m
+[1m--- a/client/client_test.go[m
+[1m+++ b/client/client_test.go[m
+[36m@@ -48,22 +48,12 @@[m [mfunc TestAddUser(t *testing.T) {[m
+ 			},[m
+ 		},[m
+ 	}[m
+[31m-	// got := Adduser(c, "testuser1", "testuser1@gmail.com", 101010)[m
+[31m-	// want := "new user added"[m
+[31m-[m
+[31m-	// if got != want {[m
+[31m-	// 	t.Errorf("got %q, wanted %q", got, want)[m
+[31m-	// }[m
+ 	for senario, tt := range tests {[m
+[31m-		// fmt.Println("hello im in TestAdduser")[m
+ 		t.Run(senario, func(t *testing.T) {[m
+ 			fmt.Println("hello im in TestAdduser")[m
+ 			fmt.Println("the tt.in value is", tt.in.User)[m
+ 			out, err := c.AddUser(context.Background(), tt.in)[m
+[31m-			fmt.Println("heii")[m
+[31m-			// fmt.Println("err")[m
+ 			if err != nil {[m
+[31m-				// fmt.Println("hello im in TestAdduser")[m
+ 				t.Errorf("Err%q", err)[m
+ 			} else {[m
+ 				if tt.expected.Expresult == out.Response {[m
+[1mdiff --git a/client/root.go b/client/root.go[m
+[1mindex 4415d37..d67880d 100644[m
+[1m--- a/client/root.go[m
+[1m+++ b/client/root.go[m
+[36m@@ -61,7 +61,6 @@[m [mvar addactivityCmd = &cobra.Command{[m
+ 		email activity duration[m
+ 	`,[m
+ 	Run: func(cmd *cobra.Command, args []string) {[m
+[31m-		// fmt.Println("addactivity called")[m
+ 		connection, err := grpc.Dial(":50051", grpc.WithInsecure())[m
+ 		if err != nil {[m
+ 			fmt.Println("the error is ", err)[m
+[1mdiff --git a/main1.go b/main1.go[m
+[1mindex bdedc20..a47061e 100644[m
+[1m--- a/main1.go[m
+[1m+++ b/main1.go[m
+[36m@@ -52,7 +52,7 @@[m [mfunc CreateUser(w http.ResponseWriter, r *http.Request) {[m
+ 	json.NewDecoder(r.Body).Decode(user)[m
+ 	acts := []Activity{}[m
+ 	user.Act_rec = acts[m
+[31m-	// fmt.Println("user name is", user.Name)[m
+[32m+[m
+ 	query := bson.M{[m
+ 		"email": user.Email,[m
+ 	}[m
